@@ -155,10 +155,10 @@ $(document).ready(function () {
 <div id="loading-the-datasets" class="section level3">
 <h3>Loading the datasets</h3>
 <pre class="r"><code>
-trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv";
-testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv";
-training <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""));
-testing <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""));
+trainUrl &lt;- &quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;
+testUrl &lt;- &quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;
+training &lt;- read.csv(url(trainUrl), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
+testing &lt;- read.csv(url(testUrl), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
 </code></pre>
 </div>
 <div id="cross-validation-partition-the-training-data" class="section level3">
