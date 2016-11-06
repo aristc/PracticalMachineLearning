@@ -139,6 +139,10 @@ $(document).ready(function () {
 </div>
 <div id="setting-the-set-and-loading-the-libraries" class="section level3">
 <h3>Setting the set and loading the libraries</h3>
+<pre class="r"><code>set.seed(32323)
+library(caret)
+library(randomForest)
+</code></pre>
 <pre><code>## Warning: package 'caret' was built under R version 3.3.1</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
@@ -154,10 +158,21 @@ $(document).ready(function () {
 </div>
 <div id="loading-the-datasets" class="section level3">
 <h3>Loading the datasets</h3>
+<pre class="r"><code>trainUrl &lt; &quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;
+testUrl &lt;&quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;
+training &lt; read.csv(url(trainUrl), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
+testing &lt; read.csv(url(testUrl), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
+</code></pre>
 </div>
 <div id="cross-validation-partition-the-training-data" class="section level3">
 <h3>Cross-Validation: Partition the training data</h3>
 <p>In order to perform cross-validation and since we have enough rows in the training dataset (20K), we will split the data in two: 60% in a subtraining dataset, 40% in a subtesting dataset</p>
+<pre class="r"><code>inTrain &lt;- createDataPartition(y=training$classe, p=0.6, list=FALSE)
+subtraining &lt;- training[inTrain, ]
+dim(subtraining)
+subtesting &lt;- training[-inTrain, ]
+dim(subtesting)
+</code></pre>  
 <pre><code>## [1] 11776   160</code></pre>
 <pre><code>## [1] 7846  160</code></pre>
 </div>
@@ -165,12 +180,30 @@ $(document).ready(function () {
 <h3>Remove unnecessary variables</h3>
 <ol style="list-style-type: decimal">
 <li><p>Remove the ID variable (first column)</p></li>
+<pre class="r"><code>subtraining&lt;-subtraining[c(-1)]</code></pre>  
 <li><p>Remove variables with more than 70% of NA values</p></li>
 </ol>
+<pre class="r"><code>threshold&lt;-0.7
+subtraining2&lt;-subtraining
+for (i in 1:length(subtraining)) {
+    if (sum(is.na(subtraining[,i]))/nrow(subtraining)>=threshold)
+    for (j in 1:length(subtraining2)) {
+     if( length( grep(names(subtraining[i]), names(subtraining2)[j]) ) ==1)
+                subtraining2 &lt;- subtraining2[ , -j]
+    }
+}
+dim(subtraining2)
+subtraining&lt;-subtraining2
+rm(subtraining2)</code></pre>  
 <pre><code>## [1] 11776    59</code></pre>
 </div>
 <div id="perform-the-same-operation-on-the-test-training-sets" class="section level3">
 <h3>Perform the same operation on the test training sets</h3>
+<pre class="r"><code>cleancol1&lt;-names(subtraining)
+subtesting&lt;-subtesting[cleancol1]</code></pre>  
+## The testing data set doesn't have the last column so we need to remove it
+cleancol2&lt;-cleancol1[-length(cleancol1)]
+testing&lt;-testing[cleancol2]
 </div>
 <div id="test-if-the-datasets-have-a-compatible-format" class="section level3">
 <h3>Test if the datasets have a compatible format</h3>
