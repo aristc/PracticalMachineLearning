@@ -1,0 +1,125 @@
+---
+title: "Pratical Machine Learning Project"
+author: "Clemence Aristide"
+date: "November 5, 2016"
+output: html_document
+---
+
+## Executive Summary
+
+We analyzed a set of data measured from accelerometers called Human Activity Recognition. Our goal was to predict the manner in which participants performed the exercises.
+
+Cross-validation: We had a training and a testing datasets. For cross-validation purposes we split the training datasets in 2: subtraining and subtesting (60/40). 
+
+We cleaned the data by removing the variables with more than 60% of NA values as well as the first column (ID) which could have skewed the prediction.
+
+Out-of sample error: We applied the most effective algorithms according to the course which are random forests and boosting. We compared their accuracy and found that random forest was more accurate. 
+
+## Preliminary Work
+
+### Understanding "classe"
+
+The documentation on the Human Activity Recognition dataset provides the explanation of what "classe" stands for.
+
+"Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: 
+* exactly according to the specification (Class A)
+* throwing the elbows to the front (Class B)
+* lifting the dumbbell only halfway (Class C)
+* lowering the dumbbell only halfway (Class D)
+* throwing the hips to the front (Class E)."
+
+Read more: http://groupware.les.inf.puc-rio.br/har#ixzz4P8FyJB9N
+
+### Setting the set and loading the libraries
+
+```{r libraries, echo=TRUE}
+set.seed(32323)
+library(caret)
+library(randomForest)
+```
+
+### Loading the datasets
+
+```{r URL, echo=TRUE}
+trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+```
+
+```{r datasets, echo=TRUE}
+training <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""))
+```
+
+### Cross-Validation: Partition the training data
+
+In order to perform cross-validation and since we have enough rows in the training dataset (20K), we will split the data in two: 60% in a subtraining dataset, 40% in a subtesting dataset
+
+```{r partition, echo=TRUE}
+inTrain <- createDataPartition(y=training$classe, p=0.6, list=FALSE)
+subtraining <- training[inTrain, ]
+dim(subtraining)
+subtesting <- training[-inTrain, ]
+dim(subtesting)
+```
+
+### Remove unnecessary variables
+
+1) Remove the ID variable (first column)
+
+```{r firstcol, echo=TRUE}
+subtraining<-subtraining[c(-1)]
+```
+
+2) Remove variables with more than 70% of NA values
+
+```{r navalues, echo=TRUE}
+threshold<-0.7
+
+subtraining2<-subtraining
+for (i in 1:length(subtraining)) {
+    if (sum(is.na(subtraining[,i]))/nrow(subtraining)>=threshold)
+    for (j in 1:length(subtraining2)) {
+     if( length( grep(names(subtraining[i]), names(subtraining2)[j]) ) ==1)
+                subtraining2 <- subtraining2[ , -j]
+    }
+}
+dim(subtraining2)
+subtraining<-subtraining2
+rm(subtraining2)
+```
+
+### Perform the same operation on the test training sets
+
+```{r testingreduce, echo=TRUE}
+cleancol1<-names(subtraining)
+subtesting<-subtesting[cleancol1]
+## The testing data set doesn't have the last column so we need to remove it
+cleancol2<-cleancol1[-length(cleancol1)]
+testing<-testing[cleancol2]
+```
+
+### Test if the datasets have a compatible format
+
+```{r compatibility, echo=TRUE}
+dim(rbind(subtraining[,-length(subtraining)],subtesting[,-length(subtesting)],testing))
+
+```
+
+## Train model
+
+We will train a random forest model and then check the accuracy on the subtesting set to decide if we use it.
+
+```{r randomforest, echo=TRUE}
+mod_rf<-train(classe~.,data=subtraining,method="rf",prox=TRUE)
+pred_rf<-predict(mod_rf,subtesting)
+confusionMatrix(pred_rf, subtesting$classe)$overall[1]
+```
+
+The accuracy is 0.99 so we'll use this model to predict the testing set.
+
+## Predict values in training set
+
+```{r finalresult, echo=TRUE}
+pred_final<-predict(mod_rf,testing)
+pred_final
+```
